@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手写数字识别</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .canvas-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        canvas {
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: crosshair;
+        }
+        
+        .canvas-container canvas:hover {
+            border-color: #667eea;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #ddd;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .upload-area i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        #uploadImage {
+            display: none;
+        }
+        
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 0 auto 20px;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .result {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .result h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .prediction {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        
+        .confidence {
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        .probabilities {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        
+        .prob-item {
+            text-align: center;
+            padding: 8px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .prob-num {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .prob-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .prob-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 手写数字识别</h1>
+        
+        <div class="main-content">
+            <div class="card">
+                <h2>✏️ 手写输入</h2>
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" width="200" height="200"></canvas>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-secondary" onclick="clearCanvas()">清除画布</button>
+                    <button class="btn-primary" onclick="recognizeCanvas()">识别数字</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📤 上传图片</h2>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('uploadImage').click()">
+                    <div>📁</div>
+                    <p>点击或拖拽上传图片</p>
+                    <p style="font-size: 0.8rem; color: #999;">支持 PNG, JPG, GIF</p>
+                </div>
+                <input type="file" id="uploadImage" accept="image/*" onchange="handleImageUpload(event)">
+                <img id="previewImg" class="preview-image" style="display: none;">
+                <button class="btn-primary" style="display: block; margin: 0 auto;" onclick="recognizeUploaded()">识别图片</button>
+            </div>
+        </div>
+        
+        <div class="card result" id="resultCard" style="display: none;">
+            <h3>🎯 识别结果</h3>
+            <div class="prediction" id="prediction">-</div>
+            <div class="confidence" id="confidence">置信度: -</div>
+            <div class="probabilities" id="probabilities"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        ctx.fillStyle = 'black';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 12;
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [lastX, lastY] = getPosition(e);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const [x, y] = getPosition(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        });
+
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDrawing = true;
+            const touch = e.touches[0];
+            [lastX, lastY] = getPositionFromTouch(touch);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const touch = e.touches[0];
+            const [x, y] = getPositionFromTouch(touch);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        });
+
+        canvas.addEventListener('touchend', () => isDrawing = false);
+
+        function getPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            return [e.clientX - rect.left, e.clientY - rect.top];
+        }
+
+        function getPositionFromTouch(touch) {
+            const rect = canvas.getBoundingClientRect();
+            return [touch.clientX - rect.left, touch.clientY - rect.top];
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'black';
+            document.getElementById('resultCard').style.display = 'none';
+        }
+
+        clearCanvas();
+
+        async function recognizeCanvas() {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            await sendImage(blob);
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('previewImg').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function recognizeUploaded() {
+            const fileInput = document.getElementById('uploadImage');
+            const file = fileInput.files[0];
+            if (file) {
+                await sendImage(file);
+            }
+        }
+
+        async function sendImage(imageFile) {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    alert('识别失败: ' + result.error);
+                    return;
+                }
+                
+                document.getElementById('prediction').textContent = result.prediction;
+                document.getElementById('confidence').textContent = `置信度: ${result.confidence}%`;
+                
+                const probContainer = document.getElementById('probabilities');
+                probContainer.innerHTML = '';
+                
+                result.probabilities.forEach((prob, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'prob-item';
+                    item.innerHTML = `
+                        <div class="prob-num">${index}</div>
+                        <div class="prob-bar"><div class="prob-fill" style="width: ${prob * 100}%"></div></div>
+                        <div style="font-size: 0.7rem; color: #666;">${Math.round(prob * 100)}%</div>
+                    `;
+                    probContainer.appendChild(item);
+                });
+                
+                document.getElementById('resultCard').style.display = 'block';
+            } catch (error) {
+                alert('网络错误: ' + error.message);
+            }
+        }
+
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('previewImg').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                
+                const input = document.getElementById('uploadImage');
+                input.files = e.dataTransfer.files;
+            }
+        });
+    </script>
+</body>
+</html>
