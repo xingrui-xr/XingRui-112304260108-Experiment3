@@ -141,7 +141,7 @@ class AdvancedCNN(nn.Module):
 - 将训练和验证的曲线绘制在同一张图上
 - 使用 `matplotlib` 绘制
 
-![Loss Curves](digit-recognizer/loss_curves.png)
+![Loss Curves](image/loss_curves.png)
 
 ### 1.6 分析问题
 
@@ -241,15 +241,15 @@ project/
 | 提交项         | 内容     |
 | ----------- | ------ |
 | GitHub 仓库地址 | https://github.com/xingrui-xr/XingRui-112304260108-Experiment3.git |
-| 在线访问链接      | （需要部署后填写）  |
+| 在线访问链接      | http://localhost:8080（运行 python app.py 后访问） |
 
 **Web 应用截图：**
 
-![Web Application](digit-recognizer/web.png)
+![Web Application](image/web.png)
 
 **预测结果截图：**
 
-![Prediction Result](digit-recognizer/手写.png)
+![Prediction Result](image/手写.png)
 
 ### 2.6 提交清单
 
@@ -283,16 +283,16 @@ project/
 
 | 提交项      | 内容                                          |
 | -------- | ------------------------------------------- |
-| 在线访问链接   | （请运行 app.py 后在浏览器打开 <http://127.0.0.1:8080> |
+| 在线访问链接   | http://localhost:8080（运行 python app.py 后访问） |
 | 实现了哪些加分项 | Top-3预测结果及置信度、概率分布条形图                       |
 
 **手写输入截图：**
 
-![Handwriting Input](digit-recognizer/上传.png)
+![Handwriting Input](image/上传.png)
 
 **手写识别结果截图：**
 
-![Handwriting Result](digit-recognizer/shangchuan.png)
+![Handwriting Result](image/shangchuan.png)
 
 ### 3.5 提交清单
 

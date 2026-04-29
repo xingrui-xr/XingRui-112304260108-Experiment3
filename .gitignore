@@ -1,7 +1,4 @@
-# 忽略CSV数据文件（太大，不需要上传）
-*.csv
-
-# 忽略模型文件
+# 忽略模型文件（太大）
 *.pth
 *.pkl
 *.pth.tar
@@ -28,3 +25,6 @@ __pycache__/
 *.tmp
 *.temp
 *.DS_Store
+
+# 忽略虚拟环境
+.venv/
